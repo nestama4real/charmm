@@ -33,7 +33,26 @@ class MacroTokenizer:
         pass
 
     def _extract_dyn(self, midi: pm.PrettyMIDI, start: float, end: float):
-        pass
+        velocities = [
+            note.velocity
+            for inst in midi.instruments
+            for note in inst.notes
+            if start <= note.start < end
+        ]
+        
+        if not velocities:
+            return DynToken.PP
+        
+        avg = np.mean(velocities)
+        
+        # MIDI velocity is in 0-127. Map to 6 buckets:
+        # pp: 0-31, p: 32-47, mp: 48-63, mf: 64-79, f: 80-95, ff: 96-127
+        if avg < 32:    return DynToken.PP
+        if avg < 48:    return DynToken.P
+        if avg < 64:    return DynToken.MP
+        if avg < 80:    return DynToken.MF
+        if avg < 96:    return DynToken.F
+        return DynToken.FF
 
     def _extract_pos(self, idx: int, total: int) -> Token:
         ratio = idx / max(total - 1, 1)
