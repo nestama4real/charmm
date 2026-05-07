@@ -20,9 +20,8 @@ class Token(Enum):
 _ROOTS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
 _MODES = ["maj", "min", "dim", "amb"]
 HarmToken = Enum("HarmToken", {
-    f"{r}_{m}": auto()
-    for r in _ROOTS
-    for m in _MODES
+    **{f"{r}_{m}": auto() for r in _ROOTS for m in _MODES},
+    "NONE": auto(),
 }, type=Token)
 
 
@@ -126,16 +125,18 @@ vocab = Vocab()
 
 @dataclass(frozen=True)
 class MacroMeasure:
-    harm:       HarmToken       # type: ignore[valid-type]
-    dens:       DensToken
-    rhycontour: RhyContourToken
-    dyn:        DynToken
-    pos:        PosToken        # type: ignore[valid-type]
+    harm_main:   Token
+    harm_accent: Token
+    dens:        Token
+    rhycontour:  Token
+    dyn:         Token
+    pos:         Token
 
     def tokenize(self) -> np.ndarray:
-        """Returns a (5,) int32 array of encoded token IDs."""
+        """Returns a (6,) int32 array of encoded token IDs."""
         return np.array([
-            vocab.harm.encode(self.harm),
+            vocab.harm.encode(self.harm_main),
+            vocab.harm.encode(self.harm_accent),
             vocab.dens.encode(self.dens),
             vocab.rhy.encode(self.rhycontour),
             vocab.dyn.encode(self.dyn),
